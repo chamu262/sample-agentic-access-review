@@ -1,0 +1,8 @@
+app_id,name,owner,monthly_cost_per_seat,privileged_groups
+crm,Northwind CRM,u013,45.00,crm-admins
+design,PixelBoard Design,u012,30.00,
+code,CodeHarbor,u011,21.00,code-owners
+finance,LedgerLite,u010,60.00,ledger-approvers
+chat,TeamChat,u014,8.00,
+analytics,ChartHouse BI,,35.00,bi-admins
+cloud,SkyStack Console,u011,0.00,cloud-root

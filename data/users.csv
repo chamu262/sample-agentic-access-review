@@ -1,0 +1,18 @@
+user_id,name,department,status,manager,type
+u001,Ava Lindqvist,Finance,active,u010,human
+u002,Ben Okafor,Engineering,active,u011,human
+u003,Chloe Martin,Marketing,active,u012,human
+u004,Dev Patel,Engineering,left,u011,human
+u005,Elena Rossi,Sales,active,u013,human
+u006,Farid Haddad,Support,disabled,u014,human
+u007,Grace Kim,Engineering,active,u011,human
+u008,Hugo Silva,Sales,active,u013,human
+u009,Isla Nowak,Finance,active,u010,human
+u010,Jonas Berg,Finance,active,,human
+u011,Kira Tanaka,Engineering,active,,human
+u012,Liam Walsh,Marketing,active,,human
+u013,Maya Costa,Sales,active,,human
+u014,Noah Fischer,Support,active,,human
+svc01,backup-bot,Engineering,active,,service
+svc02,report-sync,Finance,active,u004,service
+svc03,old-import-job,Marketing,active,,service

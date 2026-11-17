@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Access Review</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --muted:#667085; --line:#e4e7ec;
+          --high:#c0392b; --med:#d68910; --low:#5d6d7e; --ok:#1e8449; --no:#7b241c; --accent:#2e5bba; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--ink); color:#fff; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+  header h1 { font-size:18px; margin:0; }
+  header small { color:#c8cfdc; }
+  main { max-width:1100px; margin:0 auto; padding:20px 16px 40px; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .tile b { display:block; font-size:24px; }
+  .tile span { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
+  .bar button, .bar a { border:1px solid var(--line); background:var(--card); border-radius:999px; padding:6px 12px; cursor:pointer; color:var(--ink); text-decoration:none; font-size:13px; }
+  .bar button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .bar .spacer { flex:1; }
+  .item { background:var(--card); border:1px solid var(--line); border-left:5px solid var(--low); border-radius:10px; padding:14px 16px; margin-bottom:10px; display:grid; grid-template-columns:1fr auto; gap:12px; }
+  .item.high { border-left-color:var(--high); } .item.medium { border-left-color:var(--med); }
+  .item h3 { margin:0 0 4px; font-size:15px; }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; background:#eef1f6; color:var(--muted); margin-right:4px; }
+  .tag.high { background:#fbe9e7; color:var(--high); } .tag.medium { background:#fef5e7; color:var(--med); }
+  .why { margin:6px 0; } .act { color:var(--muted); }
+  .money { font-weight:600; color:var(--ok); }
+  .btns { display:flex; flex-direction:column; gap:6px; min-width:110px; }
+  .btns button { border:1px solid var(--line); border-radius:8px; padding:7px 10px; cursor:pointer; background:#fff; font-weight:600; }
+  .btns .a.sel { background:var(--ok); color:#fff; border-color:var(--ok); }
+  .btns .r.sel { background:var(--no); color:#fff; border-color:var(--no); }
+  .decided { opacity:.75; }
+  .note { color:var(--muted); font-size:12px; margin-top:20px; }
+  @media (max-width:600px){ .item { grid-template-columns:1fr; } .btns { flex-direction:row; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Access Review Agent</h1>
+  <small id="meta">loading...</small>
+</header>
+<main>
+  <div class="tiles" id="tiles"></div>
+  <div class="bar" id="filters"></div>
+  <div id="list"></div>
+  <p class="note">The agent is read-only: it flags and explains. Approving an item only adds it to the to-do list in the report; nothing is changed in any system.</p>
+</main>
+<script>
+let S = null, filter = "all";
+const $ = (id) => document.getElementById(id);
+const money = (n) => n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function load() { S = await (await fetch("/api/review")).json(); render(); }
+async function decide(id, decision) {
+  if (S.decisions[id] === decision) decision = "pending";
+  const r = await fetch("/api/decision", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({id, decision})});
+  S = await r.json(); render();
+}
+function render() {
+  const fs = S.findings, d = S.decisions, sv = S.savings;
+  const n = (k) => fs.filter(f => f.severity === k).length;
+  const done = Object.keys(d).length;
+  $("meta").textContent = `Data as of ${S.as_of} · explanations: ${S.llm} · ${S.counts.users} users, ${S.counts.apps} apps, ${S.counts.grants} grants`;
+  $("tiles").innerHTML = `
+    <div class="tile"><span>Items flagged</span><b>${fs.length}</b>${n("high")} high · ${n("medium")} medium · ${n("low")} low</div>
+    <div class="tile"><span>Reviewed</span><b>${done} / ${fs.length}</b>${Object.values(d).filter(x=>x==="approved").length} approved</div>
+    <div class="tile"><span>Possible savings</span><b class="money">${money(sv.monthly)}/mo</b>${money(sv.annual)} per year</div>
+    <div class="tile"><span>Approved savings</span><b class="money">${money(sv.approved_monthly)}/mo</b>${money(sv.approved_annual)} per year</div>`;
+  const tabs = [["all","All"],["high","High"],["medium","Medium"],["low","Low"],["pending","Pending"]];
+  $("filters").innerHTML = tabs.map(([k,l]) => `<button class="${filter===k?"on":""}" onclick="filter='${k}';render()">${l}</button>`).join("")
+    + `<span class="spacer"></span><a href="/report.md" target="_blank">Open report</a>`;
+  const shown = fs.filter(f => filter === "all" || f.severity === filter || (filter === "pending" && !d[f.id]));
+  $("list").innerHTML = shown.map(f => `
+    <div class="item ${f.severity} ${d[f.id] ? "decided" : ""}" id="${f.id}">
+      <div>
+        <h3>${esc(f.user_name === "-" ? f.app_name : f.user_name + " → " + f.app_name)}</h3>
+        <span class="tag ${f.severity}">${f.severity}</span><span class="tag">${esc(f.kind.replace(/_/g," "))}</span><span class="tag">${f.id}</span>${f.group !== "-" ? `<span class="tag">group: ${esc(f.group)}</span>` : ""}
+        <p class="why">${esc(f.explanation)}</p>
+        <div class="act">Suggested: ${esc(f.suggested_action)}${f.monthly_saving ? ` · <span class="money">saves ${money(f.monthly_saving)}/mo</span>` : ""}</div>
+      </div>
+      <div class="btns">
+        <button class="a ${d[f.id]==="approved"?"sel":""}" onclick="decide('${f.id}','approved')">Approve</button>
+        <button class="r ${d[f.id]==="rejected"?"sel":""}" onclick="decide('${f.id}','rejected')">Reject</button>
+      </div>
+    </div>`).join("") || "<p>Nothing here.</p>";
+}
+load();
+</script>
+</body>
+</html>
