@@ -73,6 +73,17 @@ data/           # made-up demo data: users.csv, apps.csv, access.csv
 tests/          # unit tests, including the web API
 ```
 
+## Folder guides
+
+Each folder has its own README:
+
+- [access_review/](access_review/README.md) - the agent code and the seven rules
+- [access_review/static/](access_review/static/README.md) - the web page
+- [data/](data/README.md) - the made-up demo data and how to use your own
+- [tests/](tests/README.md) - what the tests cover
+- [docs/](docs/README.md) - the screenshots
+- [.github/](.github/README.md) - the CI workflow
+
 ## Screenshots
 
 Decisions update the savings totals as you go:
