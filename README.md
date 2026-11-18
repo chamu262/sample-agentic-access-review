@@ -8,7 +8,7 @@ An AI agent that reviews who has access to what, flags access that is **unused, 
 
 ## Run it (one command)
 
-Needs Python 3.9 or newer. No packages to install, no API key needed.
+Needs Python 3.10 or newer. No packages to install, no API key needed.
 
 ```bash
 python3 -m access_review
